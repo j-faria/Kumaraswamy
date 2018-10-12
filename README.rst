@@ -57,8 +57,8 @@ Copyright 2018 João Faria.
 **kumaraswamy** is free software made available under the MIT License. For
 details see the LICENSE_ file.
 
-.. _License: https://github.com/j-faria/LogUniform/blob/master/LICENSE
+.. _License: https://github.com/j-faria/Kumaraswamy/blob/master/LICENSE
 .. |License MIT| image:: http://img.shields.io/badge/license-MIT-blue.svg?style=flat
-   :target: https://github.com/j-faria/LogUniform/blob/master/LICENSE
-.. |PyPI version| image:: https://badge.fury.io/py/LogUniform.svg
-   :target: https://pypi.org/project/LogUniform/
+   :target: https://github.com/j-faria/Kumaraswamy/blob/master/LICENSE
+.. |PyPI version| image:: https://badge.fury.io/py/Kumaraswamy.svg
+   :target: https://pypi.org/project/Kumaraswamy/
