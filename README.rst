@@ -60,5 +60,5 @@ details see the LICENSE_ file.
 .. _License: https://github.com/j-faria/Kumaraswamy/blob/master/LICENSE
 .. |License MIT| image:: http://img.shields.io/badge/license-MIT-blue.svg?style=flat
    :target: https://github.com/j-faria/Kumaraswamy/blob/master/LICENSE
-.. |PyPI version| image:: https://badge.fury.io/py/Kumaraswamy.svg
+.. |PyPI version| image:: https://badge.fury.io/py/kumaraswamy.svg
    :target: https://pypi.org/project/Kumaraswamy/
