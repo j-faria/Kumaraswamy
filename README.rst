@@ -3,7 +3,9 @@ Kumaraswamy
 
 A simple implementation of the Kumaraswamy distribution.
 
-|License MIT| |PyPI version|
+|License MIT| |PyPI version| |DOIzenodo|
+
+
 
 How to use
 ----------
@@ -62,3 +64,5 @@ details see the LICENSE_ file.
    :target: https://github.com/j-faria/Kumaraswamy/blob/master/LICENSE
 .. |PyPI version| image:: https://badge.fury.io/py/kumaraswamy.svg
    :target: https://pypi.org/project/Kumaraswamy/
+.. |DOIzenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3951068.svg
+   :target: https://doi.org/10.5281/zenodo.3951068
