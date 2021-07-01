@@ -2,7 +2,7 @@
 from setuptools import setup
 
 setup(name='kumaraswamy',
-      version='0.1',
+      version='0.2',
       description='Implementation of the Kumaraswamy distribution',
       long_description=open('README.rst').read(),
       author='João Faria',
