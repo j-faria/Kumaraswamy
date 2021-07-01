@@ -2,34 +2,32 @@ import numpy as np
 from abc import ABC, abstractmethod
 from math import gamma
 
+
+def _array_or_float(x):
+    if x.ndim == 0:
+        return x[()]
+    return x
+
+
 class dist(ABC):
-    """ 
+    """
     A simple distribution class.
-    Requires the implementation of properties `a` and `b`, representing the 
-    bounds of the distribution, and methods `pdf`, `cdf` for the probability 
-    and cumulative density functions and `ppf` for the inverse of `cdf`.
+    Requires the implementation methods `pdf`, `cdf` for the probability and
+    cumulative density functions and `ppf` for the inverse of `cdf`.
     """
 
-    # @property
-    # @abstractmethod
-    # def a(self): pass
-    
-    # @property
-    # @abstractmethod
-    # def b(self): pass
-
     @abstractmethod
-    def pdf(self, x): 
+    def pdf(self, x):
         """ Probability density function evaluated at x. """
         pass
 
     @abstractmethod
-    def cdf(self, x): 
+    def cdf(self, x):
         """ Cumulative density function evaluated at x. """
         pass
 
     @abstractmethod
-    def ppf(self, x): 
+    def ppf(self, x):
         """ Percent point function (inverse of `cdf`) evaluated at q. """
         pass
 
@@ -52,7 +50,7 @@ class dist(ABC):
         """
         u = np.random.uniform(size=size)
         s = self.ppf(u)
-        return np.asscalar(s) if size==1 else s
+        return np.asscalar(s) if size == 1 else s
 
     def interval(self, alpha):
         """
@@ -74,27 +72,27 @@ class dist(ABC):
         alpha = np.asarray(alpha)
         if np.any((alpha > 1) | (alpha < 0)):
             raise ValueError("alpha must be between 0 and 1 inclusive")
-        q1 = (1.0-alpha)/2
-        q2 = (1.0+alpha)/2
+        q1 = (1.0 - alpha) / 2
+        q2 = (1.0 + alpha) / 2
         a = self.ppf(q1)
         b = self.ppf(q2)
         return a, b
 
 
 class kumaraswamy(dist):
-    """ 
+    """
     A Kumaraswamy distribution, similar in many ways to the Beta distribution.
 
     This distribution is defined over the (0, 1) interval, and has parameters
     a and b. The probability density function is
-  
+
     ```
     pdf(x; a, b) = a * b * x**(a - 1) * (1 - x**a)**(b -  1)
     ```
 
     Parameters
     ----------
-    
+
     Methods
     -------
     pdf    : probability density function
@@ -107,46 +105,60 @@ class kumaraswamy(dist):
     mean, mode, var, std, skewness, kurtosis
 
     """
-
     def __init__(self, a, b):
-        assert a>0 and b>0, \
+        assert a > 0 and b > 0, \
             'parameters `a` and `b` must both be positive'
-        self.a, self.b = a, b
+        self.a, self.b = float(a), float(b)
 
     def _support_mask(self, x):
-        return (0 <= x) & (x <= 1)
+        return (0.0 <= x) & (x <= 1.0)
+
     def _separate_support_mask(self, x):
-        return 0 <= x, x <= 1
+        return 0.0 <= x, x <= 1.0
 
     def pdf(self, x):
         x = np.asarray(x)
         m = self._support_mask(x)
         a, b = self.a, self.b
-        with np.errstate(invalid='ignore', divide='ignore'):
-            return np.where(m, a * b * x**(a-1) * (1-x**a)**(b-1), 0.)
-    
+        p = np.zeros_like(x, dtype=np.float64)
+        with np.errstate(divide='ignore'):
+            p[m] = a * b * x[m]**(a - 1) * (1 - x[m]**a)**(b - 1)
+        return _array_or_float(p)
+
     def logpdf(self, x):
-        pass
         x = np.asarray(x)
         m = self._support_mask(x)
-        with np.errstate(invalid='ignore', divide='ignore'):
-            return np.log(self.a) + np.log(self.b) + (self.a-1)*np.log(x) + (self.b-1)*np.log(1-x**self.a)
+        logp = np.full_like(x, -np.inf, dtype=np.float64)
+        logp[m] = np.log(self.a) + np.log(self.b)
+        with np.errstate(divide='ignore'):
+            logp[m] += (self.a - 1) * np.log(x[m])
+            logp[m] += (self.b - 1) * np.log(1 - x[m]**self.a)
+        return _array_or_float(logp)
 
     def cdf(self, x):
         x = np.asarray(x)
-        m1, m2 = self._separate_support_mask(x)
-        with np.errstate(invalid='ignore'):
-            return np.where(m2, np.where(m1, 1 - (1 - x**self.a)**self.b, 0.), 1.)
-    
+        _, m2 = self._separate_support_mask(x)
+        c = np.zeros_like(x, dtype=np.float64)
+        # for values above upper limit, cdf = 1.0
+        c[~m2] = 1.0
+        # otherwise, calculate
+        m = self._support_mask(x)
+        c[m] = 1 - (1 - x[m]**self.a)**self.b
+        return _array_or_float(c)
+
     def ppf(self, p):
         p = np.asarray(p)
-        m1, m2 = 0 < p, p < 1
-        return np.where(m2, np.where(m1, (1 - (1-p)**(1/self.b))**(1/self.a), 0.), 1.)
+        v = np.full_like(p, np.nan, dtype=np.float64)
+        # for probabilities >=0 and <=1, calculate
+        m = (p >= 0.0) & (p <= 1.0)
+        v[m] = (1 - (1 - p[m])**(1 / self.b))**(1 / self.a)
+        return _array_or_float(v)
 
     @property
     def mean(self):
-        return (self.b * gamma(1+1/self.a) * gamma(self.b)) / gamma(1 + 1/self.a + self.b)
-    
+        return (self.b * gamma(1 + 1 / self.a) *
+                gamma(self.b)) / gamma(1 + 1 / self.a + self.b)
+
     @property
     def mode(self):
         """
@@ -159,30 +171,29 @@ class kumaraswamy(dist):
 
         This property is only defined in the first two cases, returning the 
         mode and the antimode, respectively.
-        """ 
-        if (self.a>1 and self.b>1) or (self.a<1 and self.b<1):
+        """
+        if (self.a > 1 and self.b > 1) or (self.a < 1 and self.b < 1):
             return ((self.a - 1) / (self.a * self.b - 1))**(1 / self.a)
         else:
             return np.nan
-    
+
     def moment(self, n):
         """ Raw moment of order n """
-        return (self.b * gamma(1+n/self.a) * gamma(self.b)) / gamma(1 + n/self.a + self.b)
+        return (self.b * gamma(1 + n / self.a) *
+                gamma(self.b)) / gamma(1 + n / self.a + self.b)
 
     @property
     def var(self):
         return self.moment(2) - self.moment(1)**2
-    
+
     @property
     def std(self):
         return np.sqrt(self.var)
-    
+
     @property
     def skewness(self):
-        raise(NotImplementedError)
-    
+        raise (NotImplementedError)
+
     @property
     def kurtosis(self):
-        raise(NotImplementedError)
-
-
+        raise (NotImplementedError)
